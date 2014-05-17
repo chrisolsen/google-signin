@@ -1,0 +1,17 @@
+{
+  "name": "google-signin",
+
+  "scripts": [
+    "index.js"
+  ],
+
+  "templates": [
+    "template.html"
+  ],
+
+  "dependencies": {
+    "component/reactive": "*",
+    "component/dom": "*",
+    "visionmedia/superagent": "*"
+  }
+}
