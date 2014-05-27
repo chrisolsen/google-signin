@@ -1,3 +1,17 @@
+/**
+ * Insert and binds a Google+ Sign in button on the page.
+ *
+ * Ex:
+ *  <!-- html -->
+ *  <div id="google-signin"></div>
+ *
+ *  <!-- js binding -->
+ *  var googleSignin = new GoogleSignin('#google-signin', 'your_client_id', function(authResult) {
+ *    // make api calls here
+ *  });
+ *
+ */
+
 /* jshint camelcase:false */
 
 'use strict';
@@ -5,7 +19,6 @@
 var template  = require('./template.html');
 var reactive  = require('reactive');
 var dom       = require('dom');
-var request   = require('superagent');
 
 module.exports = GoogleSignin;
 
@@ -14,37 +27,51 @@ module.exports = GoogleSignin;
  * Constructor
  * @constructor
  */
-function GoogleSignin(clientId, authenticationCallback) {
+function GoogleSignin(selector, clientId, authenticationCallback) {
+  if (!(this instanceof GoogleSignin)) {
+    return new GoogleSignin(selector, clientId, authenticationCallback);
+  }
+
   this.clientId = clientId;
-  this.onAuth = authenticationCallback;
+  this.onAuth   = authenticationCallback;
+  this.selector = selector;
 
   // Make this available within the global scope to allow
   // for binding to the Google button control
   window.gplusSigninCallback = this.onSignin.bind(this);
+
+  this._bindButton();
+  this._injectScript();
 }
 
 
 /**
  * Injects the required google api script tag into the page
+ *
+ * @private
  */
-GoogleSignin.prototype.injectScript = function() {
+GoogleSignin.prototype._injectScript = function() {
+  var plusSrc = 'https://apis.google.com/js/client:plusone.js';
+
+  if (document.querySelector('script[src="'+plusSrc+'"]')) {
+    return;
+  }
+
   var s = document.getElementsByTagName('script')[0];
   var po = document.createElement('script');
   po.type = 'text/javascript';
   po.async = true;
-  po.src = 'https://apis.google.com/js/client:plusone.js';
+  po.src = plusSrc;
   s.parentNode.insertBefore(po, s);
 };
 
 
 /**
  * Adds the google signin button to the passed in element
- *
- * @param {Element} appendTo - The element to append the google button within
  */
-GoogleSignin.prototype.bindButton = function(appendTo) {
+GoogleSignin.prototype._bindButton = function() {
   this.view = reactive(template, this, {delegate: this});
-  dom(appendTo).append(this.view.el);
+  dom(this.selector).append(this.view.el);
 };
 
 
@@ -54,20 +81,26 @@ GoogleSignin.prototype.bindButton = function(appendTo) {
  * @params {Object} authResult - User credentials returned from Google
  */
 GoogleSignin.prototype.onSignin = function(authResult) {
-  var onAuthCallback = this.onAuth;
-  var requiresAuth = authResult.code;
+  /* global gapi */
+  var onAuthCallback  = this.onAuth,
+      requiresAuth    = authResult.code;
 
   if (authResult.access_token) {
-    dom('#signinButton').css({display: 'none'});
+    dom('#signinButton')
+      .removeClass('fade-in')
+      .addClass('fade-out');
+  } else {
+    dom('#signinButton')
+      .removeClass('fade-out')
+      .addClass('fade-in');
   }
 
   if (requiresAuth) {
-    request
-      .post('/api/users')
-      .send({ code: authResult.code })
-      .end(function(err, res) {
-        dom('#signinButton').css({display: 'none'});
-        onAuthCallback(err, res.body);
+    gapi.client.load('plus', 'v1', function() {
+      var request = gapi.client.plus.people.get({ 'userId': 'me' });
+      request.execute(function(resp) {
+        onAuthCallback(resp);
       });
+    });
   }
 };
