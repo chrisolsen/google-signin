@@ -6,10 +6,20 @@
  *  <div id="google-signin"></div>
  *
  *  <!-- js binding -->
- *  var googleSignin = new GoogleSignin('#google-signin', 'your_client_id', function(authResult) {
- *    // make api calls here
- *  });
  *
+ *  var customScopes = [
+ *    'https://www.googleapis.com/auth/plus.login',
+ *    'https://www.googleapis.com/auth/userinfo.email',
+ *    'https://www.googleapis.com/auth/plus.login'
+ *  ];
+ *
+ *  var googleSignin = new GoogleSignin(
+ *    '#google-signin',
+ *    'your_client_id',
+ *    customScopes,
+ *    function(authResult) {
+ *      // make api calls here
+ *    });
  */
 
 /* jshint camelcase:false */
@@ -27,14 +37,23 @@ module.exports = GoogleSignin;
  * Constructor
  * @constructor
  */
-function GoogleSignin(selector, clientId, authenticationCallback) {
-  if (!(this instanceof GoogleSignin)) {
-    return new GoogleSignin(selector, clientId, authenticationCallback);
+function GoogleSignin(selector, clientId, scopes, authenticationCallback) {
+  if (selector === null) throw new Error('css selector is required');
+  if (clientId === null) throw new Error('clientId is required');
+
+  if ('function' === typeof scopes) {
+    authenticationCallback = scopes;
+    scopes = ['https://www.googleapis.com/auth/plus.login'];
   }
 
-  this.clientId = clientId;
-  this.onAuth   = authenticationCallback;
+  if (!(this instanceof GoogleSignin)) {
+    return new GoogleSignin(selector, clientId, scopes, authenticationCallback);
+  }
+
   this.selector = selector;
+  this.clientId = clientId;
+  this.scopes   = scopes.join(' ');
+  this.onAuth   = authenticationCallback;
 
   // Make this available within the global scope to allow
   // for binding to the Google button control
