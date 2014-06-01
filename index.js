@@ -1,6 +1,9 @@
 /**
  * Insert and binds a Google+ Sign in button on the page.
  *
+ * Inser the following script tag into the head element:
+ *   <script async src="https://apis.google.com/js/client:plusone.js"></script>
+ *
  * Ex:
  *  <!-- html -->
  *  <div id="google-signin"></div>
@@ -62,27 +65,6 @@ function GoogleSignin(selector, clientId, scopes, authenticationCallback) {
   this._bindButton();
   this._injectScript();
 }
-
-
-/**
- * Injects the required google api script tag into the page
- *
- * @private
- */
-GoogleSignin.prototype._injectScript = function() {
-  var plusSrc = 'https://apis.google.com/js/client:plusone.js';
-
-  if (document.querySelector('script[src="'+plusSrc+'"]')) {
-    return;
-  }
-
-  var s = document.getElementsByTagName('script')[0];
-  var po = document.createElement('script');
-  po.type = 'text/javascript';
-  po.async = true;
-  po.src = plusSrc;
-  s.parentNode.insertBefore(po, s);
-};
 
 
 /**
