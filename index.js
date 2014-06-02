@@ -63,7 +63,6 @@ function GoogleSignin(selector, clientId, scopes, authenticationCallback) {
   window.gplusSigninCallback = this.onSignin.bind(this);
 
   this._bindButton();
-  this._injectScript();
 }
 
 
